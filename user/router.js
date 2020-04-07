@@ -1,7 +1,11 @@
 const { Router } = require("express");
 const bcrypt = require("bcrypt");
 const { toJWT } = require("../auth/jwt");
+const auth = require("../auth/middleware");
 const User = require("./model");
+const Party = require("../party/model");
+const Character = require("../character/model");
+const Chest = require("../chest/model");
 
 const router = new Router();
 
@@ -40,6 +44,37 @@ router.post("/login", async (req, res, next) => {
     }
 
     return res.status(400).send("Please provide a valid email and password");
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/user/:id", auth, async (req, res, next) => {
+  try {
+    if (parseInt(req.params.id) !== parseInt(req.user.id)) {
+      return res.status(400).send("You don't have permission to do this");
+    }
+
+    const characters = await Character.findAll({
+      where: {
+        userId: req.user.id,
+      },
+      include: [Chest],
+    });
+
+    const partyIds = userCharacters
+      .map((char) => char.partyId)
+      .sort((a, b) => a - b)
+      .filter((id, i, array) => id !== array[i + 1]);
+
+    const parties = await Party.findAll({
+      where: {
+        id: partyIds,
+      },
+      include: [Chest],
+    });
+
+    return res.json({ parties, characters });
   } catch (err) {
     next(err);
   }
