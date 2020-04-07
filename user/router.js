@@ -62,7 +62,7 @@ router.get("/user/:id", auth, async (req, res, next) => {
       include: [Chest],
     });
 
-    const partyIds = userCharacters
+    const partyIds = characters
       .map((char) => char.partyId)
       .sort((a, b) => a - b)
       .filter((id, i, array) => id !== array[i + 1]);
